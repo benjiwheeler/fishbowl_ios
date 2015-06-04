@@ -128,11 +128,9 @@ public class SKTRotateEffect: SKTEffect {
  */
 public extension SKAction {
   public class func actionWithEffect(effect: SKTEffect) -> SKAction {
-    NSLog("running actionWithE")
 
     return SKAction.customActionWithDuration(effect.duration) { node, elapsedTime in
       var t = elapsedTime / CGFloat(effect.duration)
-        NSLog("elapsed time: %.3f, node.speed %.3f; node speed %.3f; node is %p", elapsedTime, node.speed, node.speed, node)
       if let timingFunction = effect.timingFunction {
         t = timingFunction(t)  // the magic happens here
       }
