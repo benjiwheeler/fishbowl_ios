@@ -48,24 +48,31 @@ public class SKTEffect {
  * Moves a node from its current position to a new position.
  */
 public class SKTMoveEffect: SKTEffect {
-  var startPosition: CGPoint
-  var delta: CGPoint
-  var previousPosition: CGPoint
-  
+  var totalDelta: CGPoint
+  var appliedDelta: CGPoint = CGPoint(x: 0, y: 0)
+  var previousT: CGFloat = CGFloat(0)
+
   public init(node: SKNode, duration: NSTimeInterval, startPosition: CGPoint, endPosition: CGPoint) {
-    previousPosition = node.position
-    self.startPosition = startPosition
-    delta = endPosition - startPosition
+    totalDelta = endPosition - startPosition
     super.init(node: node, duration: duration)
   }
-  
+
+  public init(node: SKNode, duration: NSTimeInterval, delta: CGPoint) {
+    totalDelta = delta
+    super.init(node: node, duration: duration)
+  }
+
   public override func update(t: CGFloat) {
-    // This allows multiple SKTMoveEffect objects to modify the same node
-    // at the same time.
-    let newPosition = startPosition + delta*t
-    let diff = newPosition - previousPosition
-    previousPosition = newPosition
-    node.position += diff
+    if (t < previousT) {
+        appliedDelta = CGPoint(x: 0, y: 0)
+    }
+    previousT = t
+    // Using delta rather than absolute location allows multiple SKTMoveEffect objects
+    // to modify the same node at the same time.
+    let deltaTarget = totalDelta * t
+    let deltaToApply = deltaTarget - appliedDelta
+    node.position += deltaToApply
+    appliedDelta = deltaTarget
   }
 }
 
@@ -121,9 +128,11 @@ public class SKTRotateEffect: SKTEffect {
  */
 public extension SKAction {
   public class func actionWithEffect(effect: SKTEffect) -> SKAction {
+    NSLog("running actionWithE")
+
     return SKAction.customActionWithDuration(effect.duration) { node, elapsedTime in
       var t = elapsedTime / CGFloat(effect.duration)
-
+        NSLog("elapsed time: %.3f, node.speed %.3f; node speed %.3f; node is %p", elapsedTime, node.speed, node.speed, node)
       if let timingFunction = effect.timingFunction {
         t = timingFunction(t)  // the magic happens here
       }
