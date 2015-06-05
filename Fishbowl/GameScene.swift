@@ -9,13 +9,17 @@
 import SpriteKit
 
 struct PhysicsCategory {
-    static let None      : UInt32 = 0
-    static let All       : UInt32 = UInt32.max
-    static let Fish: UInt32 = 0b1       // 1
-    static let FishAware: UInt32 = 0b10 // 2
-    static let Food: UInt32 = 0b100 // 4
+    static let kNone      : UInt32 = 0
+    static let kAll       : UInt32 = UInt32.max
+    static let kSceneBoundary: UInt32 = 0b1       // 1
+    static let kFish: UInt32 = 0b10       // 2
+    static let kFishAware: UInt32 = 0b100 // 4
+    static let kFood: UInt32 = 0b1000 // 8
 }
 
+func randomInt(min: Int, max:Int) -> Int {
+    return min + Int(arc4random_uniform(UInt32(max - min + 1)))
+}
 
 
 //implement this
@@ -96,6 +100,7 @@ public extension SKNode {
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var selectedNode: SKNode? = nil
+    var fishes: [Fish] = []
     
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
@@ -114,7 +119,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         bg.position = CGPoint(x:size.width/2.0, y:size.height/2.0);
 //        bg.frame = self.frame
         addChild(bg)
-        addFish()
+
+        let minX: Int = 100
+        let maxX: Int = 500
+        let minY = 100
+        let maxY = 500
+        for var i = 0; i < 5; ++i {
+            let newFish = Fish()
+            fishes.append(newFish)
+            let startingX = Int(arc4random_uniform(UInt32(maxX - minX))) + minX
+            let startingY = Int(arc4random_uniform(UInt32(maxY - minY))) + minY
+
+            newFish.position = CGPoint(x: startingX, y: startingY)
+            addChild(newFish)
+        }
+        
+        self.physicsBody = SKPhysicsBody(edgeLoopFromRect: CGRect(x: self.frame.minX + 80, y: self.frame.minY + 70, width: self.frame.width - 200, height: self.frame.height - 250))
+        self.physicsBody!.categoryBitMask = PhysicsCategory.kSceneBoundary;
+
 
         
 //        addChild(myLabel)
@@ -129,8 +151,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if (selectedNode == nil) { // no draggable node found under touch
                 createFoodAt(locationInScene!)
             } else {
-                let patrolActionFromKey: SKAction? = selectedNode?.findActionInNodeHierarchy("patrol")
-                patrolActionFromKey?.speed = 0.0
+                if let selectedFish: Fish = selectedNode! as? Fish {
+                    selectedFish.stopActions()
+                }
             }
         }
     }
@@ -146,8 +169,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
-        let patrolActionFromKey: SKAction? = selectedNode?.findActionInNodeHierarchy("patrol")
-        patrolActionFromKey?.speed = 1.0
+        if let selectedFish: Fish = selectedNode as? Fish {
+            selectedFish.restartActions()
+        }
         selectedNode = nil
         return
     }
@@ -166,7 +190,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     */
     func panForTranslation(translation: CGPoint?) {
         let nodePos = selectedNode?.position
-        if (matchesNodeType(selectedNode, category: PhysicsCategory.Fish)) {
+        if (matchesNodeType(selectedNode, category: PhysicsCategory.kFish)) {
             if (nodePos != nil && translation != nil) {
                 let newPos = nodePos! + translation!
                 selectedNode?.position = newPos;
@@ -189,14 +213,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         //1
         let touchedNodes: [SKNode] = nodesAtPoint(touchLocation) as! [SKNode]
         for touchedNode in touchedNodes {
-            if (matchesNodeType(touchedNode, category: PhysicsCategory.Fish)) {
+            if (matchesNodeType(touchedNode, category: PhysicsCategory.kFish)) {
                 // nodes must not already be equal
                 if (selectedNode == nil || !selectedNode!.isEqualToNode(touchedNode)) {
-                    selectedNode?.removeAllActions()
+//                    selectedNode?.removeAllActions()
                     //selectedNode?.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
                     selectedNode = touchedNode;
                     //3
-                    if (matchesNodeType(selectedNode, category: PhysicsCategory.Fish)) {
+                    if (matchesNodeType(selectedNode, category: PhysicsCategory.kFish)) {
 /*
                         selectedNode!.runAction(
                             SKAction.repeatActionForever(
@@ -223,107 +247,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(foodNode)
         foodNode.physicsBody = SKPhysicsBody(rectangleOfSize: foodNode.size) // 1
         foodNode.physicsBody?.dynamic = true // 2
-        foodNode.physicsBody?.categoryBitMask = PhysicsCategory.Food // 3
-        foodNode.physicsBody?.contactTestBitMask = PhysicsCategory.FishAware // 4
-        foodNode.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
+        foodNode.physicsBody?.categoryBitMask = PhysicsCategory.kFood // 3
+        foodNode.physicsBody?.contactTestBitMask = PhysicsCategory.kFishAware // 4
+        foodNode.physicsBody?.collisionBitMask = PhysicsCategory.kSceneBoundary // 5
         
 
     }
     
-    func addFish() {
-        var fishImages: [SKTexture] = []
-        for (var i = 1; i <= 65; ++i) {
-            let celName = NSString(format: "Angler300%02d.png", i)
-            let cel = SKTexture(imageNamed: celName as! String);
-            fishImages.append(cel)
-        }
-        let location = CGPoint(x: size.width * 0.1, y: size.height * 0.5)
-        let fish = SKNode()
-        fish.name = "fish"
-        fish.position = location
-  
-        let fishSheetNode = SKSpriteNode(texture: fishImages.first)
-        fishSheetNode.name = "sheet"
-        let sheetAction: SKAction = SKAction.repeatActionForever(SKAction.animateWithTextures(fishImages, timePerFrame: 0.1))
-
-        fish.physicsBody = SKPhysicsBody(circleOfRadius: fishSheetNode.size.width * 0.35) // 1
-        fish.physicsBody?.dynamic = true // do be affected by forces
-        fish.physicsBody?.affectedByGravity = false
-        fish.physicsBody?.categoryBitMask = PhysicsCategory.Fish // 3
-        fish.physicsBody?.contactTestBitMask = PhysicsCategory.Food // 4
-        fish.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
-        
-        let fishAwareNode = SKSpriteNode()
-        fishAwareNode.name = "awareNode"
-        fishAwareNode.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: fishSheetNode.size.width * 2, height: fishSheetNode.size.height)) // 1
-        fishAwareNode.physicsBody?.dynamic = false // do be affected by forces
-        fishAwareNode.physicsBody?.affectedByGravity = false
-        fishAwareNode.physicsBody?.categoryBitMask = PhysicsCategory.FishAware // 3
-        fishAwareNode.physicsBody?.contactTestBitMask = PhysicsCategory.Food // 4
-        fishAwareNode.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
-
-        
-        addChild(fish)
-        fish.addChild(fishAwareNode)
-        fishAwareNode.addChild(fishSheetNode)
-        
-        // SKUtils will help us ease!
-        let floatUpVector = CGPoint(x: 0, y: 30)
-        let floatDownVector = CGPoint(x: 0, y: -30)
-        let floatLeftVector = CGPoint(x: -800, y: 0)
-        let floatRightVector = CGPoint(x: 800, y: 0)
-        
-        let upEffect = SKTMoveEffect(node: fish, duration: 1.0, delta: floatUpVector)
-        let downEffect = SKTMoveEffect(node: fish, duration: 1.0, delta: floatDownVector)
-        let leftEffect = SKTMoveEffect(node: fish, duration: 5.0, delta: floatLeftVector)
-        let rightEffect = SKTMoveEffect(node: fish, duration: 5.0, delta: floatRightVector)
-
-        upEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
-        downEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
-        leftEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
-        rightEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
-
-        let floatAction: SKAction =
-            SKAction.repeatActionForever(
-                SKAction.sequence([
-                    SKAction.actionWithEffect(upEffect),
-                    SKAction.actionWithEffect(downEffect)
-                ])
-            )
-        let patrolAction =
-            SKAction.repeatActionForever(
-                SKAction.sequence([
-                    SKAction.actionWithEffect(rightEffect),
-                    SKAction.runBlock({
-                        let tempFish: SKNode? = self.childNodeWithName("fish")
-//                        NSLog("patrolAction: after right, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
-                    }),
-                    SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1}),
-                    SKAction.actionWithEffect(leftEffect),
-                    SKAction.runBlock({
-                        let tempFish: SKNode? = self.childNodeWithName("fish")
-//                        NSLog("patrolAction: after left, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
-                    }),
-                    SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1})
-                ])
-            )
-        
-        fish.userData = NSMutableDictionary()
-        fish.userData!["type"] = Int(PhysicsCategory.Fish)
-        
-        fishSheetNode.runAction(sheetAction, withKey: "sheet")
-        fish.runAction(patrolAction, withKey: "patrol")
-        fish.runAction(floatAction, withKey: "float")
-        
-        NSLog("patrolAction address %p should equal actionforkey %p", patrolAction, fish.actionForKey("patrol")!)
-
-    }
-    
-    // hugely important: need to manually reset the relative coordinates of fishAware child node, or else it simply doesn't follow its parent node at all, but just keeps doing its own thing!
-    override func didSimulatePhysics() {
-        let fishAware = self.childNodeWithNameRecursive("awareNode")
-        fishAware?.position = CGPoint(x: 0.0, y: 0.0)
-    }
     
     func didBeginContact(contact: SKPhysicsContact) {
         
@@ -339,23 +269,136 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         // 2
-        if ((firstBody.categoryBitMask & PhysicsCategory.FishAware != 0) &&
-            (secondBody.categoryBitMask & PhysicsCategory.Food != 0)) {
-                foodDidCollideWithFishAware(secondBody.node as! SKSpriteNode, fishAwareNode: firstBody.node as! SKSpriteNode)
+        if ((firstBody.categoryBitMask & PhysicsCategory.kFishAware != 0) &&
+            (secondBody.categoryBitMask & PhysicsCategory.kFood != 0)) {
+                if let fishAwareNode: SKSpriteNode = firstBody.node as? SKSpriteNode {
+                    if let fish: Fish = fishAwareNode.parentNodeWithName("fish") as? Fish {
+                        fish.foodDidCollideWithFishAware(secondBody.node as! SKSpriteNode, fishAwareNode: fishAwareNode)
+                    }
+                }
         }
-        if ((firstBody.categoryBitMask & PhysicsCategory.Fish != 0) &&
-            (secondBody.categoryBitMask & PhysicsCategory.Food != 0)) {
-                foodDidCollideWithFish(secondBody.node as! SKSpriteNode, fishNode: firstBody.node!)
+        if ((firstBody.categoryBitMask & PhysicsCategory.kFish != 0) &&
+            (secondBody.categoryBitMask & PhysicsCategory.kFood != 0)) {
+                if let fish: Fish = firstBody.node as? Fish {
+                    fish.foodDidCollideWithFish(secondBody.node as! SKSpriteNode)
+                }
         }
-        
     }
 
-    class func pursuitAction(targetNode: SKNode, pursuerNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> SKAction? {
-        let awareNode: SKNode? = pursuerNode.childNodeWithName("awareNode")
-        NSLog("pursuitAction: targetNode.pos: (%f, %f);  pursuerNode.pos: (%f, %f); awareNode.pos: (%f, %f)", targetNode.position.x, targetNode.position.y, pursuerNode.position.x,pursuerNode.position.y, awareNode!.position.x, awareNode!.position.y)
+    // hugely important: need to manually reset the relative coordinates of fishAware child node, or else it simply doesn't follow its parent node at all, but just keeps doing its own thing!
+    override func didSimulatePhysics() {
+        for fish in fishes {
+            let fishAware = fish.childNodeWithNameRecursive("awareNode")
+            fishAware?.position = CGPoint(x: 0.0, y: 0.0)
+        }
+    }
+
+}
+
+class Fish: SKNode {
+    var targetedNode: SKNode?
+    var doPursuit = true
+    
+    required init(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override init() {
+        super.init()
+        
+        var fishImages: [SKTexture] = []
+        for (var i = 1; i <= 65; ++i) {
+            let celName = NSString(format: "Angler300%02d.png", i)
+            let cel = SKTexture(imageNamed: celName as! String);
+            fishImages.append(cel)
+        }
+        self.name = "fish"
+        self.position = CGPoint(x: 100.0, y: 100.0)
+        
+        let fishSheetNode = SKSpriteNode(texture: fishImages.first)
+        fishSheetNode.name = "sheet"
+        let sheetAction: SKAction = SKAction.repeatActionForever(SKAction.animateWithTextures(fishImages, timePerFrame: 0.1))
+        
+        
+        let fishAwareNode = SKSpriteNode()
+        fishAwareNode.name = "awareNode"
+        fishAwareNode.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: fishSheetNode.size.width * 2, height: fishSheetNode.size.height)) // 1
+        fishAwareNode.physicsBody?.dynamic = false // do be affected by forces
+        fishAwareNode.physicsBody?.affectedByGravity = false
+        fishAwareNode.physicsBody?.categoryBitMask = PhysicsCategory.kFishAware // 3
+        fishAwareNode.physicsBody?.contactTestBitMask = PhysicsCategory.kFood // 4
+        fishAwareNode.physicsBody?.collisionBitMask = PhysicsCategory.kNone // 5
+        
+        self.addChild(fishAwareNode)
+        fishAwareNode.addChild(fishSheetNode)
+        
+        self.physicsBody = SKPhysicsBody(circleOfRadius: fishSheetNode.size.width * 0.25) // 1
+        self.physicsBody?.dynamic = true // do be affected by forces
+        self.physicsBody?.affectedByGravity = false
+        self.physicsBody?.categoryBitMask = PhysicsCategory.kFish // 3
+        self.physicsBody?.contactTestBitMask = PhysicsCategory.kFood // 4
+        self.physicsBody?.collisionBitMask = PhysicsCategory.kSceneBoundary + PhysicsCategory.kFish // 5
+
+        // note that the placement order of this command matters!
+        self.setScale(0.5)
+
+        // SKUtils will help us ease!
+        let patrolX = randomInt(600, 900)
+        let patrolDuration: CGFloat = CGFloat(Double(randomInt(300, 700)) / 100.0)
+        let floatUpVector = CGPoint(x: 0, y: 30)
+        let floatDownVector = CGPoint(x: 0, y: -30)
+        let floatLeftVector = CGPoint(x: -patrolX, y: 0)
+        let floatRightVector = CGPoint(x: patrolX, y: 0)
+        
+        let upEffect = SKTMoveEffect(node: self, duration: 1.0, delta: floatUpVector)
+        let downEffect = SKTMoveEffect(node: self, duration: 1.0, delta: floatDownVector)
+        let leftEffect = SKTMoveEffect(node: self, duration: Double(patrolDuration), delta: floatLeftVector)
+        let rightEffect = SKTMoveEffect(node: self, duration: Double(patrolDuration), delta: floatRightVector)
+        
+        upEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
+        downEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
+        leftEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
+        rightEffect.timingFunction = SKTTimingFunctionQuadraticEaseInOut
+        
+        let floatAction: SKAction =
+        SKAction.repeatActionForever(
+            SKAction.sequence([
+                SKAction.actionWithEffect(upEffect),
+                SKAction.actionWithEffect(downEffect)
+                ])
+        )
+        let patrolAction =
+        SKAction.repeatActionForever(
+            SKAction.sequence([
+                SKAction.actionWithEffect(rightEffect),
+                SKAction.runBlock({
+                }),
+                SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1}),
+                SKAction.actionWithEffect(leftEffect),
+                SKAction.runBlock({
+//                    let tempFish: SKNode? = self.childNodeWithName("fish")
+                    //                        NSLog("patrolAction: after left, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
+                }),
+                SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1})
+                ])
+        )
+        
+        self.userData = NSMutableDictionary()
+        self.userData!["type"] = Int(PhysicsCategory.kFish)
+        
+        fishSheetNode.runAction(sheetAction, withKey: "sheet")
+        self.runAction(patrolAction, withKey: "patrol")
+        self.runAction(floatAction, withKey: "float")
+        
+        NSLog("patrolAction address %p should equal actionforkey %p", patrolAction, self.actionForKey("patrol")!)
+    }
+    
+    func pursuitAction(targetNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> SKAction? {
+        let awareNode: SKNode? = self.childNodeWithNameRecursive("awareNode")
+//        NSLog("pursuitAction: targetNode.pos: (%f, %f);  self.pos: (%f, %f); awareNode.pos: (%f, %f)", targetNode.position.x, targetNode.position.y, self.position.x, self.position.y, awareNode!.position.x, awareNode!.position.y)
         var curSegmentDuration = segmentDuration
         var segmentDist: CGFloat = CGFloat(segmentDuration) * distPerSec
-        let vectorToTarget: CGPoint = targetNode.position - pursuerNode.position
+        let vectorToTarget: CGPoint = targetNode.position - self.position
 
         // adjust duration and distance if target is very close
         let targetDist: CGFloat = vectorToTarget.length()
@@ -369,51 +412,61 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         // figure out where we're going
         let vectorForSegment: CGPoint = vectorToTarget.normalized() * segmentDist * 10.0
-        let segmentTargetPos: CGPoint = pursuerNode.position + vectorForSegment
+        let segmentTargetPos: CGPoint = self.position + vectorForSegment
   
         return SKAction.sequence([
             SKAction.runBlock({
-                if let body: SKPhysicsBody = pursuerNode.physicsBody {
-                    NSLog("applying force (%f, %f)", vectorForSegment.x, vectorForSegment.y)
+                if let body: SKPhysicsBody = self.physicsBody {
+//                    NSLog("applying force (%f, %f)", vectorForSegment.x, vectorForSegment.y)
                     body.applyForce(CGVector(point: vectorForSegment))
                 }
             }),
-            SKAction.waitForDuration(1.0)
+            SKAction.waitForDuration(0.1)
         ])
 //        return SKAction.moveTo(segmentTargetPos, duration: curSegmentDuration)
     }
     
-    class func runPursuitAction(targetNode: SKNode, pursuerNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> Void {
-        if let thisPursuitAction: SKAction = pursuitAction(targetNode, pursuerNode: pursuerNode, distPerSec: distPerSec, segmentDuration: segmentDuration) {
-            pursuerNode.runAction(thisPursuitAction,
+    func runPursuitAction(targetNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> Void {
+        if let thisPursuitAction: SKAction = pursuitAction(targetNode, distPerSec: distPerSec, segmentDuration: segmentDuration) {
+            self.runAction(thisPursuitAction,
                 completion: {
-                    GameScene.runPursuitAction(targetNode, pursuerNode: pursuerNode, distPerSec: distPerSec, segmentDuration: segmentDuration)
+                    if (self.doPursuit && targetNode == self.targetedNode && self.targetedNode != nil) { // stop pursuing if targetted node is gone!
+                        self.runPursuitAction(targetNode, distPerSec: distPerSec, segmentDuration: segmentDuration)
+                    }
                 }
             )
         }
         return
     }
 
-    func foodDidCollideWithFish(foodNode: SKSpriteNode, fishNode: SKNode) {
+    func patrolAction() -> SKAction? {
+        let patrolActionFromKey: SKAction? = self.findActionInNodeHierarchy("patrol")
+        return patrolActionFromKey
+    }
+    func foodDidCollideWithFish(foodNode: SKSpriteNode) {
         foodNode.removeFromParent()
-        let patrolActionFromKey: SKAction? = fishNode.findActionInNodeHierarchy("patrol")
-        patrolActionFromKey?.speed = 1.0
-
+        targetedNode = nil
+        patrolAction()?.speed = 1.0
     }
     
     func foodDidCollideWithFishAware(foodNode: SKSpriteNode, fishAwareNode: SKSpriteNode) {
-        let fishNode: SKNode? = fishAwareNode.parentNodeWithName("fish")
-        if (fishNode != nil) {
-            // fish now wants to eat this food!
-            // stop patrol
-            let patrolActionFromKey: SKAction? = fishNode!.findActionInNodeHierarchy("patrol")
-            patrolActionFromKey?.speed = 0.0
-            // start pursuit
-
-            // NOTE: problem here is that we don't have access to variables for duration outside of blocks. probably should change approach to constant 1s actions, and work out direction and distance in block? then we can stop it any time.
-
-                GameScene.runPursuitAction(foodNode, pursuerNode: fishNode!, distPerSec: CGFloat(500.0), segmentDuration: NSTimeInterval(0.1))
-        }
+        // fish now wants to eat this food!
+        // stop patrol
+        patrolAction()?.speed = 0.5
+        targetedNode = foodNode
+        // start pursuit
+        self.runPursuitAction(targetedNode!, distPerSec: CGFloat(500.0), segmentDuration: NSTimeInterval(0.1))
     }
 
+    func restartActions() -> Void {
+        patrolAction()?.speed = 1.0
+        doPursuit = true
+    }
+    
+    func stopActions() -> Void {
+        patrolAction()?.speed = 0.0
+        doPursuit = false // forget about the food you're pursuing
+        self.physicsBody?.velocity = CGVector(dx: 0.0, dy: 0.0)
+        return
+    }
 }
