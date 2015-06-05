@@ -43,6 +43,30 @@ public extension SKNode {
         return nil
     }
     
+    func childNodeWithNameRecursive(name: String, var maxDepth: Int? = nil) -> SKNode? {
+        // try to find node within this node...
+        if let nodeHere: SKNode = self.childNodeWithName(name) {
+            // ...if we find it, we're good!
+            return nodeHere
+        }
+        
+        if (maxDepth == nil) {
+            maxDepth = DEFAULT_MAX_RECURSIVE_DEPTH()
+        }
+        if (maxDepth == nil || maxDepth <= 0) {
+            return nil
+        }
+        
+        // recursively search child nodes for action
+        for child in self.children {
+            let childNode = child as? SKNode
+            if let childResult: SKNode = childNode?.childNodeWithNameRecursive(name, maxDepth: maxDepth! - 1) {
+                return childResult
+            }
+        }
+        return nil
+    }
+    
     func findActionInNodeHierarchy(key: String, var maxDepth: Int? = nil) -> SKAction? {
         // try to find action within this node...
         if let actionHere: SKAction = self.actionForKey(key) {
@@ -216,12 +240,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let location = CGPoint(x: size.width * 0.1, y: size.height * 0.5)
         let fish = SKNode()
         fish.name = "fish"
-
-
-        let fishFloat = SKNode()
-        fishFloat.name = "float"
-        let fishPatrol = SKNode()
-        fishPatrol.name = "patrol"
         fish.position = location
   
         let fishSheetNode = SKSpriteNode(texture: fishImages.first)
@@ -229,7 +247,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let sheetAction: SKAction = SKAction.repeatActionForever(SKAction.animateWithTextures(fishImages, timePerFrame: 0.1))
 
         fish.physicsBody = SKPhysicsBody(circleOfRadius: fishSheetNode.size.width * 0.35) // 1
-        fish.physicsBody?.dynamic = false // 2
+        fish.physicsBody?.dynamic = true // do be affected by forces
+        fish.physicsBody?.affectedByGravity = false
         fish.physicsBody?.categoryBitMask = PhysicsCategory.Fish // 3
         fish.physicsBody?.contactTestBitMask = PhysicsCategory.Food // 4
         fish.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
@@ -237,16 +256,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let fishAwareNode = SKSpriteNode()
         fishAwareNode.name = "awareNode"
         fishAwareNode.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: fishSheetNode.size.width * 2, height: fishSheetNode.size.height)) // 1
-        fishAwareNode.physicsBody?.dynamic = false // 2
+        fishAwareNode.physicsBody?.dynamic = false // do be affected by forces
+        fishAwareNode.physicsBody?.affectedByGravity = false
         fishAwareNode.physicsBody?.categoryBitMask = PhysicsCategory.FishAware // 3
         fishAwareNode.physicsBody?.contactTestBitMask = PhysicsCategory.Food // 4
         fishAwareNode.physicsBody?.collisionBitMask = PhysicsCategory.None // 5
 
         
         addChild(fish)
-        fish.addChild(fishFloat)
-        fishFloat.addChild(fishPatrol)
-        fishPatrol.addChild(fishAwareNode)
+        fish.addChild(fishAwareNode)
         fishAwareNode.addChild(fishSheetNode)
         
         // SKUtils will help us ease!
@@ -278,13 +296,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     SKAction.actionWithEffect(rightEffect),
                     SKAction.runBlock({
                         let tempFish: SKNode? = self.childNodeWithName("fish")
-                        NSLog("patrolAction: after right, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
+//                        NSLog("patrolAction: after right, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
                     }),
                     SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1}),
                     SKAction.actionWithEffect(leftEffect),
                     SKAction.runBlock({
                         let tempFish: SKNode? = self.childNodeWithName("fish")
-                        NSLog("patrolAction: after left, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
+//                        NSLog("patrolAction: after left, fish node position is (%f, %f)", tempFish!.position.x, tempFish!.position.y)
                     }),
                     SKAction.runBlock({fishSheetNode.xScale = fishSheetNode.xScale * -1})
                 ])
@@ -301,6 +319,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     }
     
+    // hugely important: need to manually reset the relative coordinates of fishAware child node, or else it simply doesn't follow its parent node at all, but just keeps doing its own thing!
+    override func didSimulatePhysics() {
+        let fishAware = self.childNodeWithNameRecursive("awareNode")
+        fishAware?.position = CGPoint(x: 0.0, y: 0.0)
+    }
     
     func didBeginContact(contact: SKPhysicsContact) {
         
@@ -328,6 +351,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     class func pursuitAction(targetNode: SKNode, pursuerNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> SKAction? {
+        let awareNode: SKNode? = pursuerNode.childNodeWithName("awareNode")
+        NSLog("pursuitAction: targetNode.pos: (%f, %f);  pursuerNode.pos: (%f, %f); awareNode.pos: (%f, %f)", targetNode.position.x, targetNode.position.y, pursuerNode.position.x,pursuerNode.position.y, awareNode!.position.x, awareNode!.position.y)
         var curSegmentDuration = segmentDuration
         var segmentDist: CGFloat = CGFloat(segmentDuration) * distPerSec
         let vectorToTarget: CGPoint = targetNode.position - pursuerNode.position
@@ -343,10 +368,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         // figure out where we're going
-        let vectorForSegment: CGPoint = vectorToTarget.normalized() * segmentDist
+        let vectorForSegment: CGPoint = vectorToTarget.normalized() * segmentDist * 10.0
         let segmentTargetPos: CGPoint = pursuerNode.position + vectorForSegment
-                    
-        return SKAction.moveTo(segmentTargetPos, duration: curSegmentDuration)
+  
+        return SKAction.sequence([
+            SKAction.runBlock({
+                if let body: SKPhysicsBody = pursuerNode.physicsBody {
+                    NSLog("applying force (%f, %f)", vectorForSegment.x, vectorForSegment.y)
+                    body.applyForce(CGVector(point: vectorForSegment))
+                }
+            }),
+            SKAction.waitForDuration(1.0)
+        ])
+//        return SKAction.moveTo(segmentTargetPos, duration: curSegmentDuration)
     }
     
     class func runPursuitAction(targetNode: SKNode, pursuerNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> Void {
