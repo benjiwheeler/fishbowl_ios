@@ -227,7 +227,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         let fishAwareNode = SKSpriteNode()
         fishAwareNode.name = "awareNode"
-        fishAwareNode.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: fishSheetNode.size.width * 2, height: fishSheetNode.size.height)) // 1
+        fishAwareNode.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: fishSheetNode.size.width * 2, height: fishSheetNode.size.height), center: CGPoint(x: 0, y: fishSheetNode.centerRect.height/2.0)) // 1
         fishAwareNode.physicsBody?.dynamic = false // 2
         fishAwareNode.physicsBody?.categoryBitMask = PhysicsCategory.FishAware // 3
         fishAwareNode.physicsBody?.contactTestBitMask = PhysicsCategory.Food // 4
@@ -306,6 +306,32 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
     }
 
+    class func pursuitAction(targetNode: SKNode, pursuerNode: SKNode, distPerSec: CGFloat, segmentDuration: NSTimeInterval) -> SKAction? {
+        var curSegmentDuration = segmentDuration
+        var segmentDist: CGFloat = CGFloat(segmentDuration) * distPerSec
+        let vectorToTarget: CGPoint = targetNode.position - pursuerNode.position
+
+        // adjust duration and distance if target is very close
+        let targetDist: CGFloat = vectorToTarget.length()
+        if (targetDist < segmentDist) {
+            curSegmentDuration = NSTimeInterval(Double(CGFloat(curSegmentDuration) * targetDist / segmentDist))
+            segmentDist = targetDist
+        }
+
+        // figure out where we're going
+        let vectorForSegment: CGPoint = vectorToTarget.normalized() * segmentDist
+        let segmentTargetPos: CGPoint = pursuerNode.position + vectorForSegment
+                    
+        return SKAction.sequence([
+            SKAction.waitForDuration(NSTimeInterval(1.0)),
+            SKAction.runBlock({
+                NSLog("running inner block")
+            }),
+            SKAction.moveTo(segmentTargetPos, duration: curSegmentDuration),
+            SKAction.waitForDuration(NSTimeInterval(1.0))
+        ])
+    }
+    
     func foodDidCollideWithFishAware(foodNode: SKSpriteNode, fishAwareNode: SKSpriteNode) {
         let fishNode: SKNode? = fishAwareNode.parentNodeWithName("fish")
         if (fishNode != nil) {
@@ -314,46 +340,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let patrolActionFromKey: SKAction? = fishNode!.findActionInNodeHierarchy("patrol")
             patrolActionFromKey?.speed = 0.0
             // start pursuit
-            let distPerS: CGFloat = 200.0
-            let iterationPortionSize: CGFloat = 1.0
-            var durationToFood: NSTimeInterval = 0.0
-            var effectiveFoodPos: CGPoint = CGPoint(x: 0.0, y: 0.0)
 
             // NOTE: problem here is that we don't have access to variables for duration outside of blocks. probably should change approach to constant 1s actions, and work out direction and distance in block? then we can stop it any time.
-            let pursuitAction =
-            SKAction.repeatActionForever(
-                SKAction.sequence([
-                    SKAction.runBlock({
-                        NSLog("running custom block. fishNode position is (%f, %f)", fishNode!.position.x, fishNode!.position.y)
 
-                        let vectorToFood: CGPoint = foodNode.position - fishNode!.position
-                        let vectorForIteration: CGPoint = vectorToFood * iterationPortionSize
-                        effectiveFoodPos = fishAwareNode.position + vectorForIteration
-                        let distToFood: CGFloat = vectorForIteration.length()
-                        durationToFood = NSTimeInterval(distToFood/distPerS)
-                        
-                        // invoked asynchronously
-                        fishAwareNode.runAction(
-                            SKAction.sequence([
-                                SKAction.waitForDuration(NSTimeInterval(1.0)),
-                                SKAction.runBlock({
-                                    NSLog("running inner block")
-                                }),
-                                SKAction.moveTo(effectiveFoodPos, duration: durationToFood),
-                                SKAction.waitForDuration(NSTimeInterval(1.0))
-                            ])
-                        )
-                        NSLog("done running custom block")
-                        return ()
-                    }),
-                    SKAction.waitForDuration(NSTimeInterval(5.0))
-                ])
-            )
-            fishAwareNode.runAction(pursuitAction, withKey: "pursuit")
-
-
+            if let pursuitActionVal: SKAction = GameScene.pursuitAction(foodNode, pursuerNode: fishNode!, distPerSec: CGFloat(200.0), segmentDuration: NSTimeInterval(2.0)) {
+                fishNode!.runAction(pursuitActionVal, withKey: "pursuit")
+            }
         }
-        
     }
 
 }
