@@ -22,6 +22,15 @@ func randomInt(min: Int, max:Int) -> Int {
     return min + Int(arc4random_uniform(UInt32(max - min + 1)))
 }
 
+func delay(delay:Double, closure:()->()) {
+    dispatch_after(
+        dispatch_time(
+            DISPATCH_TIME_NOW,
+            Int64(delay * Double(NSEC_PER_SEC))
+        ),
+        dispatch_get_main_queue(), closure)
+}
+
 
 //implement this
 public extension SKNode {
@@ -115,7 +124,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         physicsWorld.gravity = CGVectorMake(0, -0.5)
         physicsWorld.contactDelegate = self
-
+        self.name = "gamescene"
+        
         let bg: SKSpriteNode = SKSpriteNode(imageNamed:"aquarium.png")
         bg.position = CGPoint(x:size.width/2.0, y:size.height/2.0);
 //        bg.frame = self.frame
@@ -422,7 +432,7 @@ class Fish: SKNode {
                     body.applyForce(CGVector(point: vectorForSegment))
                 }
             }),
-            SKAction.waitForDuration(0.1)
+            SKAction.waitForDuration(0.1) // important: without slight wait, instantaneous force action just never stops hogging cpu
         ])
 //        return SKAction.moveTo(segmentTargetPos, duration: curSegmentDuration)
     }
@@ -448,6 +458,15 @@ class Fish: SKNode {
 //        SoundPlayer.sharedInstance.playSound("bubble_plink")
         //        runAction(SKAction.playSoundFileNamed("bubble_plink.aiff", waitForCompletion: false))
         SKTAudio.sharedInstance().playSoundEffect("comicbite_med_quiet.aiff")
+
+        let sparkEmmiter = SKEmitterNode(fileNamed: "sparks.sks")
+        sparkEmmiter.physicsBody?.collisionBitMask = 0
+        sparkEmmiter.position = foodNode.position
+        sparkEmmiter.name = "sparkEmmitter"
+        sparkEmmiter.zPosition = 1
+        sparkEmmiter.targetNode = self
+//        sparkEmmiter.particleLifetime = 1
+        self.parent?.addChild(sparkEmmiter)
 
         foodNode.removeFromParent()
         targetedNode = nil

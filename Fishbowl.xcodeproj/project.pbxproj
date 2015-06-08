@@ -16,6 +16,8 @@
 		B56BD9021B2296120009D1EB /* bubble_plink.aiff in Resources */ = {isa = PBXBuildFile; fileRef = B56BD9011B2296120009D1EB /* bubble_plink.aiff */; };
 		B56BD9041B2296270009D1EB /* bubbling_short_quiet.aiff in Resources */ = {isa = PBXBuildFile; fileRef = B56BD9031B2296270009D1EB /* bubbling_short_quiet.aiff */; };
 		B56BD90A1B2299200009D1EB /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56BD9091B2299200009D1EB /* SoundPlayer.swift */; };
+		B53FF8001B223EF30046DF38 /* sparks.sks in Resources */ = {isa = PBXBuildFile; fileRef = B53FF7FE1B223EF30046DF38 /* sparks.sks */; };
+		B53FF8011B223EF30046DF38 /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = B53FF7FF1B223EF30046DF38 /* spark.png */; };
 		B5E9A1C31B1CFE430082C2FE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C21B1CFE430082C2FE /* AppDelegate.swift */; };
 		B5E9A1C71B1CFE430082C2FE /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C61B1CFE430082C2FE /* GameScene.swift */; };
 		B5E9A1C91B1CFE430082C2FE /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C81B1CFE430082C2FE /* GameViewController.swift */; };
@@ -123,6 +125,8 @@
 		B56BD9011B2296120009D1EB /* bubble_plink.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = bubble_plink.aiff; sourceTree = "<group>"; };
 		B56BD9031B2296270009D1EB /* bubbling_short_quiet.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = bubbling_short_quiet.aiff; sourceTree = "<group>"; };
 		B56BD9091B2299200009D1EB /* SoundPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
+		B53FF7FE1B223EF30046DF38 /* sparks.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; name = sparks.sks; path = Images/Effects/sparks.sks; sourceTree = "<group>"; };
+		B53FF7FF1B223EF30046DF38 /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = spark.png; path = Images/Effects/spark.png; sourceTree = "<group>"; };
 		B5E9A1BD1B1CFE430082C2FE /* Fishbowl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fishbowl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E9A1C11B1CFE430082C2FE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B5E9A1C21B1CFE430082C2FE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -329,6 +333,8 @@
 				B53FF7F01B20BB280046DF38 /* spark.png */,
 				B53FF7F51B20BDE90046DF38 /* smoke.sks */,
 				B53FF7F71B20BE170046DF38 /* rain.sks */,
+				B53FF7FE1B223EF30046DF38 /* sparks.sks */,
+				B53FF7FF1B223EF30046DF38 /* spark.png */,
 			);
 			name = Images;
 			sourceTree = "<group>";
@@ -546,6 +552,8 @@
 				B5E9A2631B1D0EB70082C2FE /* Angler30051.png in Resources */,
 				B5E9A2361B1D0EB60082C2FE /* Angler30006.png in Resources */,
 				B5E9A26C1B1D0EB80082C2FE /* Angler30060.png in Resources */,
+				B53FF8011B223EF30046DF38 /* spark.png in Resources */,
+				B53FF8001B223EF30046DF38 /* sparks.sks in Resources */,
 				B5E9A2341B1D0EB60082C2FE /* Angler30004.png in Resources */,
 				B5E9A2461B1D0EB70082C2FE /* Angler30022.png in Resources */,
 				B5E9A2501B1D0EB70082C2FE /* Angler30032.png in Resources */,
