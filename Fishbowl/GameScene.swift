@@ -7,6 +7,7 @@
 //
 
 import SpriteKit
+//import UIControl+Sound
 
 struct PhysicsCategory {
     static let kNone      : UInt32 = 0
@@ -137,8 +138,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.physicsBody = SKPhysicsBody(edgeLoopFromRect: CGRect(x: self.frame.minX + 80, y: self.frame.minY + 70, width: self.frame.width - 200, height: self.frame.height - 250))
         self.physicsBody!.categoryBitMask = PhysicsCategory.kSceneBoundary;
 
+        SKTAudio.sharedInstance().playBackgroundMusic("bubbling_short_quiet.aiff")
 
-        
+       // SoundPlayer.sharedInstance.addSound("bubble_plink")
 //        addChild(myLabel)
     }
     
@@ -250,8 +252,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         foodNode.physicsBody?.categoryBitMask = PhysicsCategory.kFood // 3
         foodNode.physicsBody?.contactTestBitMask = PhysicsCategory.kFishAware // 4
         foodNode.physicsBody?.collisionBitMask = PhysicsCategory.kSceneBoundary // 5
-        
-
+        SKTAudio.sharedInstance().playSoundEffect("bubble_plink.aiff")
     }
     
     
@@ -444,6 +445,10 @@ class Fish: SKNode {
         return patrolActionFromKey
     }
     func foodDidCollideWithFish(foodNode: SKSpriteNode) {
+//        SoundPlayer.sharedInstance.playSound("bubble_plink")
+        //        runAction(SKAction.playSoundFileNamed("bubble_plink.aiff", waitForCompletion: false))
+        SKTAudio.sharedInstance().playSoundEffect("comicbite_med_quiet.aiff")
+
         foodNode.removeFromParent()
         targetedNode = nil
         patrolAction()?.speed = 1.0

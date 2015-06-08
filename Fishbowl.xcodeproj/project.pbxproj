@@ -12,6 +12,10 @@
 		B53FF7F61B20BDE90046DF38 /* smoke.sks in Resources */ = {isa = PBXBuildFile; fileRef = B53FF7F51B20BDE90046DF38 /* smoke.sks */; };
 		B53FF7F81B20BE170046DF38 /* rain.sks in Resources */ = {isa = PBXBuildFile; fileRef = B53FF7F71B20BE170046DF38 /* rain.sks */; };
 		B53FF7FD1B20D0B20046DF38 /* food0001.png in Resources */ = {isa = PBXBuildFile; fileRef = B53FF7FC1B20D0B20046DF38 /* food0001.png */; };
+		B56BD9001B2295EF0009D1EB /* comicbite_med_quiet.aiff in Resources */ = {isa = PBXBuildFile; fileRef = B56BD8FF1B2295EF0009D1EB /* comicbite_med_quiet.aiff */; };
+		B56BD9021B2296120009D1EB /* bubble_plink.aiff in Resources */ = {isa = PBXBuildFile; fileRef = B56BD9011B2296120009D1EB /* bubble_plink.aiff */; };
+		B56BD9041B2296270009D1EB /* bubbling_short_quiet.aiff in Resources */ = {isa = PBXBuildFile; fileRef = B56BD9031B2296270009D1EB /* bubbling_short_quiet.aiff */; };
+		B56BD90A1B2299200009D1EB /* SoundPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56BD9091B2299200009D1EB /* SoundPlayer.swift */; };
 		B5E9A1C31B1CFE430082C2FE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C21B1CFE430082C2FE /* AppDelegate.swift */; };
 		B5E9A1C71B1CFE430082C2FE /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C61B1CFE430082C2FE /* GameScene.swift */; };
 		B5E9A1C91B1CFE430082C2FE /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E9A1C81B1CFE430082C2FE /* GameViewController.swift */; };
@@ -115,6 +119,10 @@
 		B53FF7F51B20BDE90046DF38 /* smoke.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = smoke.sks; sourceTree = "<group>"; };
 		B53FF7F71B20BE170046DF38 /* rain.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = rain.sks; sourceTree = "<group>"; };
 		B53FF7FC1B20D0B20046DF38 /* food0001.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = food0001.png; sourceTree = "<group>"; };
+		B56BD8FF1B2295EF0009D1EB /* comicbite_med_quiet.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = comicbite_med_quiet.aiff; sourceTree = "<group>"; };
+		B56BD9011B2296120009D1EB /* bubble_plink.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = bubble_plink.aiff; sourceTree = "<group>"; };
+		B56BD9031B2296270009D1EB /* bubbling_short_quiet.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = bubbling_short_quiet.aiff; sourceTree = "<group>"; };
+		B56BD9091B2299200009D1EB /* SoundPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SoundPlayer.swift; sourceTree = "<group>"; };
 		B5E9A1BD1B1CFE430082C2FE /* Fishbowl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fishbowl.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B5E9A1C11B1CFE430082C2FE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B5E9A1C21B1CFE430082C2FE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -232,10 +240,29 @@
 			name = Food;
 			sourceTree = "<group>";
 		};
-		B5E9A1B41B1CFE420082C2FE = {
+		B56BD8FE1B2295B90009D1EB /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				B56BD9031B2296270009D1EB /* bubbling_short_quiet.aiff */,
+				B56BD9011B2296120009D1EB /* bubble_plink.aiff */,
+				B56BD8FF1B2295EF0009D1EB /* comicbite_med_quiet.aiff */,
+				B56BD9091B2299200009D1EB /* SoundPlayer.swift */,
+			);
+			name = Sounds;
+			sourceTree = "<group>";
+		};
+		B56BD9051B2296700009D1EB /* Third Party Libraries */ = {
 			isa = PBXGroup;
 			children = (
 				B5E9A2751B1D18C80082C2FE /* SKTUtils */,
+			);
+			name = "Third Party Libraries";
+			sourceTree = "<group>";
+		};
+		B5E9A1B41B1CFE420082C2FE = {
+			isa = PBXGroup;
+			children = (
+				B56BD9051B2296700009D1EB /* Third Party Libraries */,
 				B5E9A1BF1B1CFE430082C2FE /* Fishbowl */,
 				B5E9A1D91B1CFE430082C2FE /* FishbowlTests */,
 				B5E9A1BE1B1CFE430082C2FE /* Products */,
@@ -254,6 +281,7 @@
 		B5E9A1BF1B1CFE430082C2FE /* Fishbowl */ = {
 			isa = PBXGroup;
 			children = (
+				B56BD8FE1B2295B90009D1EB /* Sounds */,
 				B5E9A1EA1B1D0E610082C2FE /* Images */,
 				B5E9A1C21B1CFE430082C2FE /* AppDelegate.swift */,
 				B5E9A1C61B1CFE430082C2FE /* GameScene.swift */,
@@ -497,6 +525,7 @@
 				B53FF7F21B20BB280046DF38 /* spark.png in Resources */,
 				B5E9A23D1B1D0EB60082C2FE /* Angler30013.png in Resources */,
 				B5E9A2431B1D0EB60082C2FE /* Angler30019.png in Resources */,
+				B56BD9041B2296270009D1EB /* bubbling_short_quiet.aiff in Resources */,
 				B5E9A23B1B1D0EB60082C2FE /* Angler30011.png in Resources */,
 				B5E9A23C1B1D0EB60082C2FE /* Angler30012.png in Resources */,
 				B5E9A2521B1D0EB70082C2FE /* Angler30034.png in Resources */,
@@ -556,11 +585,13 @@
 				B5E9A26B1B1D0EB80082C2FE /* Angler30059.png in Resources */,
 				B5E9A1CE1B1CFE430082C2FE /* Images.xcassets in Resources */,
 				B5E9A23E1B1D0EB60082C2FE /* Angler30014.png in Resources */,
+				B56BD9001B2295EF0009D1EB /* comicbite_med_quiet.aiff in Resources */,
 				B5E9A2571B1D0EB70082C2FE /* Angler30039.png in Resources */,
 				B5E9A25E1B1D0EB70082C2FE /* Angler30046.png in Resources */,
 				B5E9A2701B1D0EB80082C2FE /* Angler30064.png in Resources */,
 				B5E9A24B1B1D0EB70082C2FE /* Angler30027.png in Resources */,
 				B5E9A2471B1D0EB70082C2FE /* Angler30023.png in Resources */,
+				B56BD9021B2296120009D1EB /* bubble_plink.aiff in Resources */,
 				B5E9A2551B1D0EB70082C2FE /* Angler30037.png in Resources */,
 				B5E9A2621B1D0EB70082C2FE /* Angler30050.png in Resources */,
 				B5E9A2681B1D0EB80082C2FE /* Angler30056.png in Resources */,
@@ -585,6 +616,7 @@
 			files = (
 				B5E9A1C71B1CFE430082C2FE /* GameScene.swift in Sources */,
 				B5E9A2831B1D18DA0082C2FE /* CGPoint+Extensions.swift in Sources */,
+				B56BD90A1B2299200009D1EB /* SoundPlayer.swift in Sources */,
 				B5E9A28C1B1D18DA0082C2FE /* SKTTimingFunctions.swift in Sources */,
 				B5E9A28B1B1D18DA0082C2FE /* SKTEffects.swift in Sources */,
 				B5E9A2871B1D18DA0082C2FE /* SKAction+SpecialEffects.swift in Sources */,
