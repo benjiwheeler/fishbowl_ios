@@ -16,21 +16,44 @@ class SoundPlayer {
     class SimultaneousSoundPlayer {
         var soundPlayers: [AVAudioPlayer] = []
         var curPlayerIndex: Int?
-        init() {}
+        var minTimeApart: Double?
+        var lastTimePlayed: NSDate?
+        init(var player: AVAudioPlayer? = nil, var minTimeApartParam: Double? = 0.05) {
+            if player != nil {
+                addPlayer(player!)
+            }
+            minTimeApart = minTimeApartParam
+        }
+        func increment() {
+            if curPlayerIndex == nil {
+                curPlayerIndex = 0
+            } else {
+                ++curPlayerIndex!
+            }
+            if (curPlayerIndex >= soundPlayers.count) {
+                curPlayerIndex! -= soundPlayers.count
+            }
+        }
         func addPlayer(player: AVAudioPlayer) {
             soundPlayers.append(player)
+            increment()
+        }
+        func enoughTimeHasPassed() -> Bool {
+            if let timeElapsed = lastTimePlayed?.timeIntervalSinceNow {
+                // note that timeElapsed will be negative.
+                return (-1.0 * timeElapsed) > minTimeApart // both are Doubles
+            } else { // lastTimePlayed was nil, so it's never been set
+                return true
+            }
         }
         func play() -> Void {
-            if (curPlayerIndex != nil && soundPlayers.count > 0 && curPlayerIndex < soundPlayers.count) {
+            if (enoughTimeHasPassed() && curPlayerIndex != nil && soundPlayers.count > 0 && curPlayerIndex < soundPlayers.count) {
                 // this line not in an if because can't be out of range
                 let curPlayer: AVAudioPlayer = soundPlayers[curPlayerIndex!]
-                // increment and mod index so it'll point to next player
-                ++curPlayerIndex!
-                if (curPlayerIndex >= soundPlayers.count) {
-                    curPlayerIndex! -= soundPlayers.count
-                }
+                increment()
                 // play current player
                 curPlayer.play()
+                lastTimePlayed = NSDate()
             }
         }
     }
@@ -44,7 +67,7 @@ class SoundPlayer {
 
     func soundFileURL(name: String, var filetype: String? = nil) -> NSURL? {
         var path: String?
-        var filetypesToTry: [String] = ["aiff", "aif", "wav"]
+        var filetypesToTry: [String] = ["caf", "aiff", "aif", "wav"]
         if (filetype != nil) {
             filetypesToTry.insert(filetype!, atIndex: 0)
         }
@@ -55,7 +78,7 @@ class SoundPlayer {
         if (path == nil) { return nil }
         return NSURL(fileURLWithPath: path!)
     }
-    
+
     func addSound(name: String, var filetype: String? = nil) -> Bool {
         if let soundFileURL = soundFileURL(name, filetype: filetype) {
             let newSoundPlayer = AVAudioPlayer(contentsOfURL: soundFileURL, error: nil)
@@ -66,13 +89,16 @@ class SoundPlayer {
         return false
     }
 
-    func addSimultaneousSound(name: String, var filetype: String? = nil) -> Bool {
+    func addSimultaneousSound(name: String, var filetype: String? = nil, var minTimeApart: Double? = 0.05) -> Bool {
         if let soundFileURL = soundFileURL(name, filetype: filetype) {
-            simultaneousSoundPlayers[name] = SimultaneousSoundPlayer()
+            simultaneousSoundPlayers[name] = SimultaneousSoundPlayer(minTimeApartParam: minTimeApart)
+            //        simultaneousSoundPlayers.updateValue(SimultaneousSoundPlayer(), forKey:name)
+            NSLog("there are \(simultaneousSoundPlayers.count) players")
             for var i = 0; i < SoundPlayer.NUM_SIMULTANEOUS_IDENTICAL_SOUNDS; ++i {
                 let newSoundPlayer = AVAudioPlayer(contentsOfURL: soundFileURL, error: nil)
                 newSoundPlayer.prepareToPlay()
                 simultaneousSoundPlayers[name]?.addPlayer(newSoundPlayer)
+                NSLog("simultaneousSoundPlayers[name] is \(simultaneousSoundPlayers[name])")
             }
             return true
         }
@@ -81,6 +107,8 @@ class SoundPlayer {
     
     func playSound(name: String) -> Void {
         if let soundPlayer = soundPlayers[name] {
+            soundPlayer.play()
+        } else if let soundPlayer = simultaneousSoundPlayers[name] {
             soundPlayer.play()
         }
     }

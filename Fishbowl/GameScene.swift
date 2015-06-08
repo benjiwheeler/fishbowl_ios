@@ -150,7 +150,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         SKTAudio.sharedInstance().playBackgroundMusic("bubbling_short_quiet.aiff")
 
-       // SoundPlayer.sharedInstance.addSound("bubble_plink")
+        SoundPlayer.sharedInstance.addSimultaneousSound("bubble_plink")
+        SoundPlayer.sharedInstance.addSimultaneousSound("comicbite_med_quiet")
 //        addChild(myLabel)
     }
     
@@ -262,7 +263,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         foodNode.physicsBody?.categoryBitMask = PhysicsCategory.kFood // 3
         foodNode.physicsBody?.contactTestBitMask = PhysicsCategory.kFishAware // 4
         foodNode.physicsBody?.collisionBitMask = PhysicsCategory.kSceneBoundary // 5
-        SKTAudio.sharedInstance().playSoundEffect("bubble_plink.aiff")
+//        runAction(SKAction.playSoundFileNamed("bubble_plink.aiff", waitForCompletion: false))
+//        SKTAudio.sharedInstance().playSoundEffect("bubble_plink.aiff")
+        SoundPlayer.sharedInstance.playSound("bubble_plink")
     }
     
     
@@ -455,9 +458,13 @@ class Fish: SKNode {
         return patrolActionFromKey
     }
     func foodDidCollideWithFish(foodNode: SKSpriteNode) {
-//        SoundPlayer.sharedInstance.playSound("bubble_plink")
-        //        runAction(SKAction.playSoundFileNamed("bubble_plink.aiff", waitForCompletion: false))
-        SKTAudio.sharedInstance().playSoundEffect("comicbite_med_quiet.aiff")
+        // sound methods:
+        // SKAction.playSoundFileNamed: typical framerate 30, lowest observed 12; echo effect present when multiple eaten but just slightly weird
+        // SKTAudio extensions playSoundEffect: typical framerate 14, lowest observed 0.4; echo effect super weird when multiple eaten
+        // SoundPlayer.playSound: typical framerate 37, lowest observed 10; debounce makes it sound normal when multiple eaten
+        SoundPlayer.sharedInstance.playSound("comicbite_med_quiet")
+        //runAction(SKAction.playSoundFileNamed("comicbite_med_quiet.aiff", waitForCompletion: false))
+//        SKTAudio.sharedInstance().playSoundEffect("comicbite_med_quiet.aiff")
 
         let sparkEmmiter = SKEmitterNode(fileNamed: "sparks.sks")
         sparkEmmiter.physicsBody?.collisionBitMask = 0
